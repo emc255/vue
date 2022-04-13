@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+    <title>VUE</title>
+    <style>
+      [v-cloak] {
+        display: none;
+      }
+      .user-container {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .user-info {
+        width: 300px;
+        height: 100px;
+      }
+      .display-choice-container {
+        padding: 10px 0 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" v-cloak class="ui container">
+      <parentcomponent />
+    </div>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+      let app = Vue.createApp({});
+
+      app.component("parentcomponent", {
+        template: `
+          <form @submit.prevent="handleSubmit">
+            <div class="display-choice-container">
+              <select class="ui simple search dropdown" @change="onChange($event)">
+                <option value="default">Default</option>
+                <option value="list">List</option>
+                <option value="grid">Grid</option>
+              </select>
+              
+              <button class="ui inverted blue button"> submit </button>
+            </div>
+            <childcomponent :users = "users" :displayType="displayType"/>
+          </form>`,
+        components: ["childcomponent"],
+        data() {
+          return {
+            users: null,
+            displayType: "default",
+            userDisplayChoice: "",
+          };
+        },
+        mounted() {
+          fetch("https://jsonplaceholder.typicode.com/users")
+            .then(async (response) => {
+              const data = await response.json();
+              if (response.ok) {
+                return data;
+              }
+              throw new Error("Cannot Fetch the file");
+            })
+            .then((data) => {
+              this.users = data;
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        },
+        methods: {
+          onChange(e) {
+            this.userDisplayChoice = e.target.value;
+          },
+          handleSubmit(e) {
+            if (this.userDisplayChoice === "") {
+              this.displayType = "default";
+            } else {
+              this.displayType = this.userDisplayChoice;
+            }
+          },
+        },
+      });
+      app.component("childcomponent", {
+        props: ["users", "displayType"],
+        template: `
+          <div v-if="displayType === 'default'">
+            <div v-for="(user, index) in users" :key="user.id">
+                <div>Name: {{user.name}}</div>
+                <div>Company Name: {{user.company.name}}</div>
+                <div>Phone Number: {{user.phone}}</div>
+                <div>Email: {{user.email}}</div>
+                <hr/> 
+            </div>
+          </div>
+
+          <div v-else-if="displayType === 'list'">
+            <div v-for="(user, index) in users" :key="user.id">
+              <div>
+                {{index+1}}.&nbsp;Name: {{user.name}}&nbsp;||&nbsp; 
+                Company Name: {{user.company.name}}&nbsp;||&nbsp; 
+                Phone Number: {{user.phone}}&nbsp;||&nbsp; 
+                Email: {{user.email}} 
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="displayType === 'grid'" class="user-container">
+            <div v-for="(user, index) in users" :key="user.id" class="user-info">
+              <div>Name: {{user.name}}</div>
+              <div>Company Name: {{user.company.name}}</div>
+              <div>Phone Number: {{user.phone}}</div>
+              <div>Email: {{user.email}}</div>
+            </div>
+          </div>
+       `,
+      });
+      app.mount("#app");
+    </script>
+  </body>
+</html>
